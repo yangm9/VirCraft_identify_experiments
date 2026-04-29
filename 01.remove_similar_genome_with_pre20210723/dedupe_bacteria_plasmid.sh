@@ -1,0 +1,8 @@
+# Set cretion - removing duplicates
+# Removing dupes from within pre and post sets
+dedupe.sh -Xmx1000G in=bacteria_plasmid_post20210723_complete_id.gt1500.fa out=bacteria_plasmid_post20210723_set.fasta ac=f
+dedupe.sh -Xmx1000G in=bacteria_plasmid_pre20210723_complete_id.gt1500.fa out=bacteria_plasmid_pre20210723_set.fasta ac=f
+# Create set union between pre and post 2020
+dedupe.sh -Xmx1000G in=bacteria_plasmid_pre20210723_set.fasta,bacteria_plasmid_post20210723_set.fasta out=bacteria_plasmid_union_pre-post20210723.fasta ac=f
+# Minus pre sequences from union to create dereplicated post 2020 sequences.
+dedupe.sh -Xmx1000G in=bacteria_plasmid_pre20210723_set.fasta,bacteria_plasmid_union_pre-post20210723.fasta out=bacteria_plasmid_post20210723_deduped.fasta uniqueonly=t minidentity=95
