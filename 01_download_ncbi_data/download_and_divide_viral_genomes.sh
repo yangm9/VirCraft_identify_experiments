@@ -38,6 +38,6 @@ cd viral_assembly_post20210723
 parallel -j 64 wget < ../viral_assembly_summary_post20210723_ftplinks.txt
 cd -
 
-# 并行处理，加快速度
+# Parallel processing to speed up
 find viral_assembly_pre20210723 -name "*.gz" -type f | parallel zcat {} >> viral_assembly_pre20210723_complete.fna
 find viral_assembly_post20210723 -name "*.gz" -type f | parallel zcat {} >> viral_assembly_post20210723_complete.fna

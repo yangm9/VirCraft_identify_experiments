@@ -40,7 +40,7 @@ cd protozoa_assembly_post20210723
 parallel -j 64 wget < ../protozoa_assembly_summary_post20210723_ftplinks.txt
 cd -
 
-# 并行处理，加快速度
+# Parallel processing to speed up
 find protozoa_assembly_pre20210723 -name "*.gz" -type f | parallel zcat {} >> protozoa_assembly_pre20210723_complete.fna
 find protozoa_assembly_post20210723 -name "*.gz" -type f | parallel zcat {} >> protozoa_assembly_post20210723_complete.fna
 
