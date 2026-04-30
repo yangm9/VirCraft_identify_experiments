@@ -8,10 +8,6 @@ import networkx as nx
 from sklearn.model_selection import train_test_split
 from Bio import SeqIO
 
-############################################
-# 参数
-############################################
-
 parser = argparse.ArgumentParser(
     description="ANI-based clustering + cluster-aware split (8:1:1)"
 )
@@ -26,9 +22,7 @@ parser.add_argument("--out_prefix", default="viral")
 
 args = parser.parse_args()
 
-############################################
-# Step1: 读取 ANI
-############################################
+# Step1: Read ANI
 
 print("Reading ANI file...")
 
@@ -37,9 +31,7 @@ df.columns = ["query", "ref", "ani", "frag_matched", "frag_total"]
 
 df["af"] = df["frag_matched"] / df["frag_total"]
 
-############################################
-# Step2: 过滤
-############################################
+# Step2: Filter
 
 print("Filtering by ANI and AF...")
 
@@ -48,20 +40,18 @@ filtered = df[
     (df["af"] >= args.af_cutoff)
 ]
 
-############################################
-# Step3: 构建图 + 聚类
-############################################
+# Step3: Build graph and cluster
 
 print("Building graph...")
 
 G = nx.Graph()
 
-# 添加所有节点（防止孤立节点丢失）
+# Add all nodes to prevent isolated nodes from being lost
 for file in os.listdir(args.fasta_dir):
     if file.endswith(".fasta") or file.endswith(".fa"):
         G.add_node(file)
 
-# 添加边
+# Add edges
 for _, row in filtered.iterrows():
     q = os.path.basename(row["query"])
     r = os.path.basename(row["ref"])
@@ -71,9 +61,7 @@ clusters = list(nx.connected_components(G))
 
 print(f"Total clusters: {len(clusters)}")
 
-############################################
 # Step4: cluster-aware split
-############################################
 
 cluster_ids = list(range(len(clusters)))
 
@@ -97,10 +85,7 @@ print("Train genomes:", len(train_genomes))
 print("Val genomes:", len(val_genomes))
 print("Test genomes:", len(test_genomes))
 
-############################################
-# Step5: 合并 fasta
-############################################
-
+# Step5: Merge fasta
 def merge_fasta(genome_list, output_file):
     with open(output_file, "w") as out_handle:
         for genome_file in genome_list:
