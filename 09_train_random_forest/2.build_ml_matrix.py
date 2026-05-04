@@ -4,23 +4,21 @@ import os
 import glob
 
 def build_matrices():
-    """
-    Feature Matrix Builder:
-    1. Scans the '1.score' directory for scattered feature files.
-    2. Merges them into standardized training/validation/test datasets.
-    3. Performs feature engineering (labeling, metadata recording, cleaning).
-    4. Saves the results to '2.build_ml_matrix'.
-    """
+    #Feature Matrix Builder:
+    #1. Scans the '1.score' directory for scattered feature files.
+    #2. Merges them into standardized training/validation/test datasets.
+    #3. Performs feature engineering (labeling, metadata recording, cleaning).
+    #4. Saves the results to '2.build_ml_matrix'.
     current_dir = os.getcwd()
     
     # Define input and output directories
-    input_dir = os.path.join(current_dir, "1.score")
-    output_dir = os.path.join(current_dir, "2.build_ml_matrix")
+    input_dir = os.path.join(current_dir, '1.score')
+    output_dir = os.path.join(current_dir, '2.build_ml_matrix')
     
     # Create output directory if it doesn't exist
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-        print(f"Created output directory: {output_dir}")
+        print(f'Created output directory: {output_dir}')
 
     # Check if input directory exists
     if not os.path.exists(input_dir):
@@ -28,20 +26,20 @@ def build_matrices():
         return
 
     datasets = ['train', 'val', 'test']
-    print(f"🚀 Starting to merge feature matrices from {input_dir}...")
+    print(f'Starting to merge feature matrices from {input_dir}...')
 
     for ds in datasets:
         # 1. Automated File Matching (Scan)
         # Search within the 1.score directory for files matching the pattern
-        pattern = f"*_{ds}_*_viral_ctgs.qual.score.tsv"
+        pattern = f'*_{ds}_*_viral_ctgs.qual.score.tsv'
         files = glob.glob(os.path.join(input_dir, pattern))
         
         if not files:
-            print(f"⚠️ No files found for {ds} collection, skipping...")
+            print(f'No files found for {ds} collection, skipping...')
             continue
             
         all_dfs = []
-        print(f"📂 Processing {ds} collection, total {len(files)} files found...")
+        print(f'Processing {ds} collection, total {len(files)} files found...')
 
         for f in files:
             fname = os.path.basename(f)
@@ -74,16 +72,16 @@ def build_matrices():
             final_df = final_df.fillna(0)
             
             # 4. Statistics and Output
-            output_file = os.path.join(output_dir, f"{ds}_feature_matrix.csv")
+            output_file = os.path.join(output_dir, f'{ds}_feature_matrix.csv')
             final_df.to_csv(output_file, index=False)
             
             # Print class distribution statistics (Check for class imbalance)
             pos_count = len(final_df[final_df['label'] == 1])
             neg_count = len(final_df[final_df['label'] == 0])
-            print(f"✅ Generated: {output_file}")
-            print(f"📊 Stats: Total rows: {len(final_df)} (Positives: {pos_count}, Negatives: {neg_count})")
+            print(f'Generated: {output_file}')
+            print(f'Stats: Total rows: {len(final_df)} (Positives: {pos_count}, Negatives: {neg_count})')
 
-    print(f"\n✨ All matrices constructed in {output_dir}! You can now proceed to Random Forest training.")
+    print(f'\nAll matrices constructed in {output_dir}! You can now proceed to Random Forest training.')
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     build_matrices()

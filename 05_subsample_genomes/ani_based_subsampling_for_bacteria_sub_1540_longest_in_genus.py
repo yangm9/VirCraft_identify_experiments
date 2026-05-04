@@ -1,7 +1,8 @@
+#!/usr/bin/env python3
+
 import os
 from Bio import SeqIO
 
-# --- 配置路径 ---
 ani_dir = "bacteria_genus_ani"
 train_fasta = "fa/bacteria_genome_train.fasta"
 output_fasta = "bacteria_genome_train_sub1540_longest.fasta"
@@ -10,20 +11,20 @@ def parse_id_from_path(path_str):
     return path_str.split('/')[-1].replace('.fasta', '')
 
 def run_longest_sampling():
-    # 1. 预扫描训练集：建立 ID 到 长度 的映射，并存入白名单
-    print(f"正在扫描训练集长度信息: {train_fasta}...")
+    # 1. Pre-scanning training set: building ID-to-length mapping and storing in whitelist...
+    print(f'Scanning training set length information...: {train_fasta}...')
     id_to_len = {}
     for record in SeqIO.parse(train_fasta, "fasta"):
         id_to_len[record.id.split()[0]] = len(record.seq)
     
     train_whitelist = set(id_to_len.keys())
-    print(f"白名单加载完成，共 {len(train_whitelist)} 条序列。")
+    print(f'Whitelist loaded successfully. Total {len(train_whitelist)} sequences.')
 
-    # 2. 遍历 ANI 文件夹，每个属选最长的一个
+    # 2. Iterating through ANI folders, selecting the longest sequence per genus...
     genus_files = [f for f in os.listdir(ani_dir) if f.endswith('_ani.tsv')]
     selected_ids = set()
     
-    print(f"开始从 {len(genus_files)} 个属中提取最长代表...")
+    print(f'Starting to extract the longest representative from {len(genus_files)} genera...')
     
     for filename in genus_files:
         genus_pool = set()
@@ -40,17 +41,17 @@ def run_longest_sampling():
                 if id2 in train_whitelist: genus_pool.add(id2)
         
         if genus_pool:
-            # --- 核心修改：按长度排序，选最长的 ---
+            # --- select the longest ---
             best_id = max(genus_pool, key=lambda x: id_to_len[x])
             selected_ids.add(best_id)
 
-    print(f"属级最长代表筛选完成，共选定 {len(selected_ids)} 条。")
+    print(f'Genus-level longest representative screening completed. A total of {len(selected_ids)} sequences selected.')
 
-    # 3. 写入最终文件
-    print("正在写入 Fasta...")
+    # 3. Writing to final file...
+    print('Writing Fasta...')
     final_count = 0
     with open(output_fasta, "w") as out_f:
-        # 为了提高效率，重新扫一遍 Fasta 提取选中的 ID
+        # To improve efficiency, rescanning Fasta to extract selected IDs...
         for record in SeqIO.parse(train_fasta, "fasta"):
             rid = record.id.split()[0]
             if rid in selected_ids:
@@ -58,10 +59,10 @@ def run_longest_sampling():
                 final_count += 1
                 selected_ids.remove(rid)
     
-    print(f"\n成功！最终写入: {final_count} 条，文件: {output_fasta}")
+    print(f"\nFinished! Finally wrote: {final_count} sequences, file: {output_fasta}")
 
 if __name__ == "__main__":
     if not os.path.exists(train_fasta):
-        print(f"错误: 找不到输入文件 {train_fasta}")
+        print(f"Error: could not find input file: {train_fasta}")
     else:
         run_longest_sampling()

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import pandas as pd
 import numpy as np
 import joblib
@@ -18,14 +19,14 @@ def find_best_t(y_true, y_probs):
     return best_t
 
 def optimize_with_val(train_df, val_df, features, tag, is_short=True):
-    print(f"\n" + f" Optimizing {tag} (Training + Validation) ".center(60, "="))
+    print(f'\n' + f' Optimizing {tag} (Training + Validation) '.center(60, '='))
     
-    # --- 核心修改：合并数据并创建预定义切分 ---
-    # 我们让 GridSearchCV 在 train 集合上训练，在 val 集合上评估选参数
+    # --- Core change: Merge data and create predefined splits ---
+    #  GridSearchCV trains on the train set and evaluates on the validation set to select the best parameters
     X = pd.concat([train_df[features], val_df[features]])
     y = pd.concat([train_df['label'], val_df['label']])
     
-    # test_fold 数组：-1 表示训练集，0 表示验证集
+    # test_fold array: -1 indicates traning dataset，0 refers to validation dataset
     test_fold = np.concatenate([
         np.full(len(train_df), -1),
         np.full(len(val_df), 0)
@@ -47,14 +48,14 @@ def optimize_with_val(train_df, val_df, features, tag, is_short=True):
             'min_samples_split': [10, 20]
         }
 
-    rf = RandomForestClassifier(n_estimators=300, class_weight="balanced", n_jobs=-1, random_state=42)
+    rf = RandomForestClassifier(n_estimators=300, class_weight='balanced', n_jobs=-1, random_state=42)
     
     # 这里的 cv=ps 确保了参数选择是基于验证集表现的
     grid_search = GridSearchCV(rf, param_grid, scoring=mcc_scorer, cv=ps, verbose=1)
     grid_search.fit(X, y)
     
-    print(f"Best parameters based on Validation Set: {grid_search.best_params_}")
-    print(f"Best Val MCC: {grid_search.best_score_:.4f}")
+    print(f'Best parameters based on Validation Set: {grid_search.best_params_}')
+    print(f'Best Val MCC: {grid_search.best_score_:.4f}')
     
     return grid_search.best_estimator_
 
@@ -64,19 +65,19 @@ def run_experiment():
     val_df = pd.read_csv('val_cleaned_matrix.csv')
     features = [c for c in train_df.columns if c not in ['label', 'origin_gradient']]
     
-    # 2. 分层
+    # 2. stratify
     t_short = train_df[train_df['origin_gradient'] == '1-2k']
     v_short = val_df[val_df['origin_gradient'] == '1-2k']
     
     t_std = train_df[train_df['origin_gradient'] != '1-2k']
     v_std = val_df[val_df['origin_gradient'] != '1-2k']
     
-    # 3. 真正使用验证集来调优参数
-    model_short = optimize_with_val(t_short, v_short, features, "Short: 1-2k", is_short=True)
-    model_std = optimize_with_val(t_std, v_std, features, "Standard: >2k", is_short=False)
+    # 3. Use the validation set to tune parameters
+    model_short = optimize_with_val(t_short, v_short, features, 'Short: 1-2k', is_short=True)
+    model_std = optimize_with_val(t_std, v_std, features, 'Standard: >2k', is_short=False)
     
-    # 4. 最后再次确认各梯度的最佳阈值（在验证集上精修）
-    print("\nRefining thresholds on validation set...")
+    # 4. Re-confirm the optimal threshold for each gradient (fine-tuned on the validation set)
+    print('\nRefining thresholds on validation set...')
     best_t_map = {}
     gradients = ['1-2k', '2-5k', '5-10k', '10-20k']
     
@@ -88,14 +89,14 @@ def run_experiment():
         v_probs = m_active.predict_proba(v_sub[features])[:, 1]
         
         best_t_map[grad] = find_best_t(v_sub['label'], v_probs)
-        print(f"  - [{grad}] Final Threshold: {best_t_map[grad]:.2f}")
+        print(f'  - [{grad}] Final Threshold: {best_t_map[grad]:.2f}')
 
-    # 5. 保存
-    joblib.dump(model_short, "vircraft_rf_vs2-vb-dvf-gn_lt2k_20260330.joblib")
-    joblib.dump(model_std, "vircraft_rf_vs2-vb-dvf-gn_gt2k_20260330.joblib")
-    joblib.dump(best_t_map, "vircraft_rf_vs2-vb-dvf-gn_thr_20260330.joblib")
+    # 5. Save
+    joblib.dump(model_short, 'vircraft_rf_vs2-vb-dvf-gn_lt2k_20260330.joblib')
+    joblib.dump(model_std, 'vircraft_rf_vs2-vb-dvf-gn_gt2k_20260330.joblib')
+    joblib.dump(best_t_map, 'vircraft_rf_vs2-vb-dvf-gn_thr_20260330.joblib')
     
-    print(f"\nOptimization Finished with Validation Data Integration!")
+    print(f'\nOptimization Finished with Validation Data Integration!')
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     run_experiment()

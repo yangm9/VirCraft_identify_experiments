@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+#used name 1.assess_artificial_score_63_conbination_2-20k.py
+
 import os
 import pandas as pd
 import numpy as np
@@ -7,7 +9,6 @@ import rules_contribution
 
 SCORE_DIR = "1.score"
 
-# ===== 分段 =====
 def assign_bin(length):
     if 1000 <= length < 2000:
         return "1-2k"
@@ -20,7 +21,7 @@ def assign_bin(length):
     else:
         return None
 
-# ===== 指标 =====
+# ===== Confusion matrix evaluation metrics =====
 def compute_metrics_from_counts(TP, FN, FP, TN):
     recall = TP / (TP + FN) * 100 if (TP + FN) > 0 else 0
     precision = TP / (TP + FP) * 100 if (TP + FP) > 0 else 0
@@ -45,7 +46,7 @@ def compute_metrics(y_true, y_pred):
     return TP, FN, FP, TN, recall, precision, mcc
 
 
-# ===== 构建规则 =====
+# ===== Make ruls =====
 def build_rules():
 
     base_rules = {
@@ -59,13 +60,13 @@ def build_rules():
 
     rules = {}
 
-    # ===== 单规则 =====
+    # ===== single rule =====
     for name, func in base_rules.items():
         rules[name] = func
 
     score_cols = list(base_rules.keys())
 
-    # ===== 组合规则 =====
+    # ===== mixed rule =====
     for k in range(2, 6):
         for combo in combinations(score_cols, k):
 
@@ -76,18 +77,16 @@ def build_rules():
                 return lambda x: (x[list(cols)].sum(axis=1) >= 0.6 * len(cols)).astype(int)
             rules[combo_name] = make_func(combo)
 
-    # ===== total_score =====
     rules["total_score"] = lambda x: x["total_score"] >= 3
 
     return rules
 
 
-# ===== 主程序 =====
 def main():
 
     dfs = []
 
-    # ===== 读取 TEST 数据 =====
+    # ===== Read TEST data =====
     for f in os.listdir(SCORE_DIR):
         if not f.endswith(".tsv"):
             continue
@@ -107,23 +106,20 @@ def main():
         dfs.append(df)
 
     if len(dfs) == 0:
-        print("❌ 未找到 test 数据")
+        print("Can not find test data")
         return
 
     df = pd.concat(dfs, ignore_index=True)
 
-    # ===== 分段 =====
     df["Gradient"] = df["contig_length"].apply(assign_bin)
     df = df[df["Gradient"].notna()]
 
-    # ===== 构建规则 =====
+    # ===== Make rules =====
     rules = build_rules()
 
     results = []
 
-    # =========================================================
-    # 🔥 每个分段独立抽样（1:19）
-    # =========================================================
+    # Independently sample each length segment (1:19)
     for gradient in ["1-2k", "2-5k", "5-10k", "10-20k"]:
 
         sub = df[df["Gradient"] == gradient]
@@ -164,7 +160,7 @@ def main():
                 recall, precision, mcc
             ])
 
-    # ===== 转 dataframe =====
+    # ===== Convert dataframe =====
     result_df = pd.DataFrame(
         results,
         columns=[
@@ -175,7 +171,7 @@ def main():
     )
 
     # =========================================================
-    # 🔥 新增：2–20k 汇总
+    #  2–20k
     # =========================================================
     combined = result_df[
         result_df["Gradient"].isin(["2-5k", "5-10k", "10-20k"])
@@ -204,28 +200,24 @@ def main():
         columns=result_df.columns
     )
 
-    # ===== 合并 =====
     final_df = pd.concat([result_df, combined_df], ignore_index=True)
 
-    # ===== 排序 =====
     order = ["1-2k", "2-5k", "5-10k", "10-20k", "2-20k"]
     final_df["Gradient"] = pd.Categorical(final_df["Gradient"], categories=order, ordered=True)
 
     final_df = final_df.sort_values(["Gradient", "MCC%"], ascending=[True, False])
 
-    # ===== 格式化 =====
     final_df["Recall%"] = final_df["Recall%"].map(lambda x: f"{x:.2f}")
     final_df["Prec%"] = final_df["Prec%"].map(lambda x: f"{x:.2f}")
     final_df["MCC%"] = final_df["MCC%"].map(lambda x: f"{x:.2f}")
 
-    # ===== 输出 =====
     print("\n============================= Benchmark (With 2–20k Combined) =============================\n")
     print(final_df.to_string(index=False))
 
     rules_contribution.calc_contribution(final_df)
     final_df.to_csv("artificial_score_combinations_with_2_20k.tsv", sep="\t", index=False)
 
-    print("\n✨ 输出文件: artificial_score_combinations_with_2_20k.tsv")
+    print("\nOutput: artificial_score_combinations_with_2_20k.tsv")
 
 
 if __name__ == "__main__":
