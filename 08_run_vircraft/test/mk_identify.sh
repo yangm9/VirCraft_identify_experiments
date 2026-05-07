@@ -1,1 +1,0 @@
-cat sample.list |while read i;do echo -e "source /backup/software/miniconda3/etc/profile.d/conda.sh && conda activate\nvirCraft.py identify -a /backup/yangming/VIRPHA230501MV/vc_test/mock_data/2024-GB-Benchmarking_bioinformatic_virus/4-2.fragment_rm_training/2.subsampling/test/${i}.fasta -t 16 -o ${i}_identify -f permissive -m vs2-vb-dvf-gn -l 1000" > $i.identify.sh;done

@@ -61,5 +61,7 @@ The following tools must be installed and available in your PATH:
 
 Run the complete pipeline (Phigaro + PhageBoost):
 
-```bash
-sh /remove_provirus.sh
+```
+sh 1.remove_provirus.sh
+sh 2.link_dataset.sh
+```

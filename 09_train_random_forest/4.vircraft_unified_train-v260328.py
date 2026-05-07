@@ -61,8 +61,8 @@ def optimize_with_val(train_df, val_df, features, tag, is_short=True):
 
 def run_experiment():
     # 1. Load data
-    train_df = pd.read_csv('train_cleaned_matrix.csv')
-    val_df = pd.read_csv('val_cleaned_matrix.csv')
+    train_df = pd.read_csv('3.preprocess_ml_features/train_cleaned_matrix.csv')
+    val_df = pd.read_csv('3.preprocess_ml_features/val_cleaned_matrix.csv')
     features = [c for c in train_df.columns if c not in ['label', 'origin_gradient']]
     
     # 2. stratify

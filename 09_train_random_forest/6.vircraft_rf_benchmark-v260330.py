@@ -27,7 +27,7 @@ def run_benchmark():
         m_std = joblib.load('vircraft_rf_vs2-vb-dvf-gn_gt2k_20260330.joblib')
         t_0330 = joblib.load('vircraft_rf_vs2-vb-dvf-gn_thr_20260330.joblib')
         
-        test_raw = pd.read_csv('test_cleaned_matrix.csv')
+        test_raw = pd.read_csv('3.preprocess_ml_features/test_cleaned_matrix.csv')
     except Exception as e:
         print(f'Error: {e}')
         sys.exit(1)
